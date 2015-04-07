@@ -39,15 +39,26 @@ run() {
 	exit 1
     fi
 
+    if [ "${RUN_IN_BACKGROUND}" = "yes" ]; then
+	args="-i -t --detach"
+    else
+	args="-i -t --rm"
+    fi
+
     mkdir -p ./data
+    mkdir -p ./data/etc/suricata
+    touch ./data/etc/suricata/threshold.config
     mkdir -p ./data/etc/suricata/rules
-    mkdir -p ./data/log/suricata
-    docker run --rm --net=host --cidfile=cid \
+    mkdir -p ./data/var/log/suricata
+    docker run --net=host --cidfile=cid \
 	   -v $(pwd)/data:/data \
 	   -v $(pwd)/data/etc/suricata/rules:/etc/suricata/rules \
-	   -v $(pwd)/data/log:/var/log \
-	   -i -t ${TAG} "$@"
-    rm -f ${CIDFILE}
+	   -v $(pwd)/data/var/log:/var/log \
+	   -v $(pwd)/data/var/tmp:/var/tmp \
+	   ${args} ${TAG} "$@"
+    if [ "${RUN_IN_BACKGROUND}" != "yes" ]; then
+	rm -f ${CIDFILE}
+    fi
 }
 
 do_exec() {
@@ -61,7 +72,7 @@ do_exec() {
 exec_or_run() {
     if is_running; then
 	echo "Running command in running container."
-	do_exec "$@"
+	do_exec /init.py "$@"
     else
 	echo "Running command in new container."
 	run "$@"
@@ -69,17 +80,17 @@ exec_or_run() {
 }
 
 shell() {
-    exec_or_run shell "$@"
-}
-
-update_rules() {
-    exec_or_run /boot.sh update-rules
+    exec_or_run "shell" "$@"
 }
 
 usage() {
 cat <<EOF
-    shell            Run with a shell.
-    build            Build (or rebuild) the image.
+    start [-h]         Start the container.
+    start-background   Start the container in the background.
+    stop               Stop the running container.
+    shell              Run a shell in the image. If container is running, the
+                       shell will be executing in the running container.
+    build              Build (or rebuild) the image.
 EOF
 }
 
@@ -87,11 +98,6 @@ case "$1" in
 
     build)
 	build
-	;;
-
-    suricata)
-	shift
-	exec_or_run /usr/sbin/suricata "$@"
 	;;
 
     shell)
@@ -104,8 +110,17 @@ case "$1" in
 	run start "$@"
 	;;
 
-    update-rules)
-	update_rules
+    start-background)
+	shift
+	RUN_IN_BACKGROUND=yes run start "$@"
+	;;
+
+    stop)
+	if is_running; then
+	    docker stop $(cat cid)
+	else
+	    echo "error: container is not running."
+	fi
 	;;
 
     ps)

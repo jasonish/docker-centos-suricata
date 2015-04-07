@@ -24,14 +24,43 @@ def find_first_ether_device():
     if m:
         return m.group(1)
 
+def get_rules_md5(directory):
+    return subprocess.check_output(
+        "find %s -type f -exec cat {} \; | md5sum" % (directory), shell=True)
+
+def update_rules(restart=True):
+    pre_md5=None
+    post_md5=None
+
+    if restart:
+        pre_md5 = get_rules_md5("/data/etc/suricata/rules").strip()
+    subprocess.Popen("idstools-surirule", shell=True).wait()
+    if restart:
+        post_md5 = get_rules_md5("/data/etc/suricata/rules").strip()
+        if pre_md5 == post_md5:
+            print("Not restarting Suricata, rules have not changed.")
+        else:
+            print("Restarting Suricata.")
+            subprocess.Popen(
+                "supervisorctl restart suricata", shell=True).wait()
+
 def start(args):
 
+    if not os.path.exists("/etc/suricata/rules/classification.config"):
+        print_colour("Updating rules.", colour=BLUE)
+        update_rules(restart=False)
+
     parser = argparse.ArgumentParser("start")
-    parser.add_argument("--suricata", help="Suricata program arguments")
+    parser.add_argument("--suricata", metavar="<args>",
+                        help="Suricata program arguments")
     args = parser.parse_args(args)
+
+    default_suricata_args = []
+    default_suricata_args += ["--pidfile", "/var/run/suricata.pid"]
  
     if args.suricata:
-        suricata_args = args.suricata
+        suricata_args = "%s %s" % (
+            " ".join(default_suricata_args), args.suricata)
     if not args.suricata:
         interface = find_first_ether_device()
         if not interface:
@@ -40,7 +69,8 @@ def start(args):
                 colour=RED)
             return 1
         print_colour("Using interface: %s" % (interface), colour=YELLOW)
-        suricata_args = "--af-packet=%s" % (interface)
+        suricata_args = "%s --af-packet=%s" % (
+            " ".join(default_suricata_args), interface)
 
     # Supervisord command.
     command = ["/usr/bin/supervisord",
@@ -79,17 +109,12 @@ def main():
 
         if command == "start":
             return start(args)
+
+        if command == "update-rules":
+            return update_rules()
         
     usage()
     return 1
 
 if __name__ == "__main__":
     sys.exit(main())
-
-
-
-
-
-
-
-
