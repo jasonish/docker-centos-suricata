@@ -3,6 +3,8 @@
 
 include: /etc/suricata.dist/suricata.yaml
 
+default-log-dir: /data/var/log/suricata
+
 outputs:
   - eve-log:
       enabled: yes

@@ -1,0 +1,21 @@
+#! /bin/sh
+#
+# Entry point script to make sure the container is setup for proper
+# operation.
+
+if [ ! -d /data ]; then
+    echo "error: /data is not mounted as a volume"
+    exit 1
+fi
+
+mkdir -p /data/etc/suricata
+touch /data/etc/suricata/threshold.config
+mkdir -p /data/etc/suricata/rules
+mkdir -p /data/var/log/suricata
+mkdir -p /data/var/tmp/suricata
+
+if [ ! "$1" ]; then
+    exec /bin/bash
+fi
+
+exec "$@"
