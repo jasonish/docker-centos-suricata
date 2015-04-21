@@ -14,6 +14,9 @@ mkdir -p /data/etc/suricata/rules
 mkdir -p /data/var/log/suricata
 mkdir -p /data/var/tmp/suricata
 
+(cd /data/etc/suricata && \
+	RULECAT_LOG_LEVEL=WARNING idstools-rulecat --dump-sample-configs)
+
 if [ ! "$1" ]; then
     exec /bin/bash
 fi

@@ -3,49 +3,32 @@
 # Docker wrapper script for common commands.
 
 TAG="jasonish/centos-suricata:2.0.7"
-CIDFILE=./cid
 
 build() {
-    docker build --rm -t ${TAG} image
+    docker build ${BUILD_OPTS} --rm -t ${TAG} image
 }
 
 run() {
     if tty > /dev/null; then
         tty="--tty"
     fi
-    exec docker run ${tty} -i --rm --net=host ${ENV_FILE} \
-	   -v $(pwd)/data:/data \
-	   ${VOLUMES} \
-	   ${DOCKER_ARGS} ${TAG} "$@"
+    exec docker run ${tty} ${CIDFILE} -i --rm=${DOCKER_RUN_RM:=true} \
+	 --entrypoint=${DOCKER_RUN_ENTRYPOINT:="/tools/boot"} \
+	 --net=host ${ENV_FILE} \
+	 -v $(pwd)/data:/data \
+	 ${VOLUMES} \
+	 ${DOCKER_ARGS} ${TAG} "$@"
 }
-# run() {
-#     if is_running; then
-# 	echo "error: container is already running."
-# 	exit 1
-#     fi
 
-#     if [ "${RUN_IN_BACKGROUND}" = "yes" ]; then
-# 	args="-i -t --detach"
-#     else
-# 	args="-i -t --rm"
-#     fi
-
-#     mkdir -p ./data
-#     mkdir -p ./data/etc/suricata
-#     touch ./data/etc/suricata/threshold.config
-#     mkdir -p ./data/etc/suricata/rules
-#     mkdir -p ./data/var/log/suricata
-#     docker run --net=host --cidfile=cid \
-# 	   -v $(pwd)/data:/data \
-# 	   -v $(pwd)/data/etc/suricata/rules:/etc/suricata/rules \
-# 	   -v $(pwd)/data/var/log:/var/log \
-# 	   -v $(pwd)/data/var/tmp:/var/tmp \
-# 	   ${args} ${TAG} "$@"
-#     if [ "${RUN_IN_BACKGROUND}" != "yes" ]; then
-# 	rm -f ${CIDFILE}
-#     fi
-# }
-
+run_commit() {
+    (CIDFILE="--cidfile=cid" \
+	    DOCKER_RUN_RM=false \
+	    DOCKER_RUN_ENTRYPOINT="/tools/boot" \
+	    run /tools/update) && \
+	echo "Committing." && \
+	docker commit $(cat cid) ${TAG} && \
+	rm -f cid
+}
 
 usage() {
 cat <<EOF
@@ -69,6 +52,10 @@ case "$1" in
     run)
 	shift
 	run "$@"
+	;;
+
+    update)
+	run_commit /tools/update
 	;;
 
     *)

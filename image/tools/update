@@ -1,0 +1,6 @@
+#! /bin/sh
+
+yum -y update
+
+/usr/bin/pip install --upgrade \
+    https://github.com/jasonish/py-idstools/archive/master.zip

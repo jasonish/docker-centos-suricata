@@ -1,7 +1,8 @@
 FROM centos:centos7
 MAINTAINER Jason Ish <ish@unx.ca>
 
-RUN yum -y install epel-release && \
+RUN yum -y update && \
+    yum -y install epel-release && \
     yum -y install \
     tar \
     python-pip \
