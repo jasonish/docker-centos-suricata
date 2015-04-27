@@ -4,6 +4,10 @@
 
 TAG="jasonish/centos-suricata:2.0.7"
 
+if [ -e ./config ]; then
+    . ./config
+fi
+
 build() {
     docker build ${BUILD_OPTS} --rm -t ${TAG} image
 }
