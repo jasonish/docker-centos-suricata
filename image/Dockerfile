@@ -1,4 +1,4 @@
-FROM centos:centos7
+FROM centos:7
 MAINTAINER Jason Ish <ish@unx.ca>
 
 RUN yum -y update && \
@@ -8,7 +8,8 @@ RUN yum -y update && \
     python-pip \
     cronie \
     logrotate \
-    rsyslog
+    rsyslog \
+    python-simplejson
 
 # Add Suricata repository.
 RUN yum -y localinstall http://codemonkey.net/files/rpm/suricata/el7/suricata-release-el-7-1.el7.noarch.rpm
