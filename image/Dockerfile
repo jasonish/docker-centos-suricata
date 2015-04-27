@@ -24,6 +24,13 @@ RUN mv /etc/suricata /etc/suricata.dist
 COPY /etc/ /etc/
 COPY /tools /tools
 
+RUN mkdir -p /etc/suricata/rules && \
+    idstools-rulecat @/etc/suricata/rulecat.conf \
+    --rules-dir=/etc/suricata/rules \
+    --yaml-fragment=/etc/suricata/rules/rules.yaml \
+    --temp=/var/tmp \
+    --merged=/etc/suricata/rules/merged.rules
+
 # Some cleanup.
 RUN yum --noplugins clean all && \
     rm -rf /var/log/* && \

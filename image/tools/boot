@@ -10,9 +10,12 @@ fi
 
 mkdir -p /data/etc/suricata
 touch /data/etc/suricata/threshold.config
-mkdir -p /data/etc/suricata/rules
 mkdir -p /data/var/log/suricata
 mkdir -p /data/var/tmp/suricata
+
+if [ ! -e /data/etc/suricata/rules ]; then
+    cp -a /etc/suricata/rules /data/etc/suricata/rules
+fi
 
 (cd /data/etc/suricata && \
 	RULECAT_LOG_LEVEL=WARNING idstools-rulecat --dump-sample-configs)
