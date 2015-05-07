@@ -33,6 +33,10 @@ run() {
 	 ${TAG} "$@"
 }
 
+supervisor() {
+    run /usr/bin/supervisord --nodaemon -c /etc/supervisord.conf
+}
+
 update() {
     update_cidfile=".update-cid"
     rm -f ${update_cidfile}
@@ -71,6 +75,10 @@ case "$1" in
 
     update)
 	update
+	;;
+
+    supervisor)
+	supervisor
 	;;
 
     *)

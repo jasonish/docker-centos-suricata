@@ -11,6 +11,8 @@ RUN yum -y update && \
     rsyslog \
     python-simplejson
 
+RUN pip install supervisor
+
 # Add Suricata repository.
 RUN yum -y localinstall http://codemonkey.net/files/rpm/suricata/el7/suricata-release-el-7-1.el7.noarch.rpm
 RUN yum -y install suricata
