@@ -34,6 +34,12 @@ run() {
 }
 
 supervisor() {
+    DOCKER_CIDFILE="supervisor.cid"
+    if [ -e "${DOCKER_CIDFILE}" ]; then
+	if ! docker inspect $(cat supervisor.cid) > /dev/null 2>&1; then
+	    rm -f "${DOCKER_CIDFILE}"
+	fi
+    fi
     run /usr/bin/supervisord --nodaemon -c /etc/supervisord.conf
 }
 
