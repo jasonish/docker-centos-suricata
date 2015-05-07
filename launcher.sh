@@ -1,11 +1,13 @@
-#! /bin/sh
+#! /bin/bash
 #
 # Docker wrapper script for common commands.
 
-TAG="jasonish/centos-suricata:2.0.7"
+CONFIG_FILENAME="config"
+TAG="${TAG:=jasonish/centos-suricata:stable}"
 
-if [ -e ./config ]; then
-    . ./config
+if [ -e ${CONFIG_FILENAME} ]; then
+    . ${CONFIG_FILENAME}
+    DOCKER_ENV_FILE=${CONFIG_FILENAME}
 fi
 
 build() {
@@ -13,25 +15,34 @@ build() {
 }
 
 run() {
-    if tty > /dev/null; then
-        tty="--tty"
-    fi
-    exec docker run ${tty} ${CIDFILE} -i --rm=${DOCKER_RUN_RM:=true} \
-	 --entrypoint=${DOCKER_RUN_ENTRYPOINT:="/tools/boot"} \
-	 --net=host ${ENV_FILE} \
-	 -v $(pwd)/data:/data \
-	 ${VOLUMES} \
-	 ${DOCKER_ARGS} ${TAG} "$@"
+    tty > /dev/null && tty="--tty=true" || tty="--tty=false"
+    test -e "${CONFIG_FILENAME}" && env_file="--env-file=${CONFIG_FILENAME}"
+    net="--net=${DOCKER_NET:=host}"
+    volumes="-v $(pwd)/data:/data ${VOLUMES}"
+    cidfile="--cidfile=${DOCKER_CIDFILE:=}"
+    rm="--rm=${DOCKER_RM:=true}"
+    entrypoint="--entrypoint=${DOCKER_ENTRYPOINT:=/tools/boot}"
+    exec docker run -i \
+	 ${tty} \
+	 ${cidfile} \
+	 ${rm} \
+	 ${entrypoint} \
+	 ${net} \
+	 ${env_file} \
+	 ${volumes} \
+	 ${TAG} "$@"
 }
 
-run_commit() {
-    (CIDFILE="--cidfile=cid" \
-	    DOCKER_RUN_RM=false \
-	    DOCKER_RUN_ENTRYPOINT="/tools/boot" \
+update() {
+    update_cidfile=".update-cid"
+    rm -f ${update_cidfile}
+    (DOCKER_CIDFILE="${update_cidfile}" \
+	    DOCKER_RM=false \
+	    DOCKER_ENTRYPOINT="/tools/boot" \
 	    run /tools/update) && \
 	echo "Committing." && \
-	docker commit $(cat cid) ${TAG} && \
-	rm -f cid
+	docker commit $(cat ${update_cidfile}) ${TAG}
+    rm -f ${update_cidfile}
 }
 
 usage() {
@@ -42,8 +53,8 @@ commands:
 
     run [command]        - Default to a shell.
     build                - (Re)builds the container.
+    update               - Update OS, Suricata, etc.
  
-EOF
 EOF
 }
 
@@ -59,7 +70,7 @@ case "$1" in
 	;;
 
     update)
-	run_commit /tools/update
+	update
 	;;
 
     *)
