@@ -3,7 +3,9 @@
 # Docker wrapper script for common commands.
 
 CONFIG_FILENAME="config"
-TAG="${TAG:=jasonish/centos-suricata:stable}"
+NAME="${NAME:=jasonish/centos-suricata}"
+TAG="${TAG:=stable}"
+IMAGE="${NAME}:${TAG}"
 
 if [ -e ${CONFIG_FILENAME} ]; then
     . ${CONFIG_FILENAME}
@@ -11,7 +13,7 @@ if [ -e ${CONFIG_FILENAME} ]; then
 fi
 
 build() {
-    docker build ${BUILD_OPTS} --rm -t ${TAG} image
+    docker build ${BUILD_OPTS} --rm -t ${IMAGE} image
 }
 
 run() {
@@ -30,17 +32,30 @@ run() {
 	 ${net} \
 	 ${env_file} \
 	 ${volumes} \
-	 ${TAG} "$@"
+	 ${IMAGE} "$@"
 }
 
+SUPERVISOR_CIDFILE="supervisor.cid"
+
 supervisor() {
-    DOCKER_CIDFILE="supervisor.cid"
-    if [ -e "${DOCKER_CIDFILE}" ]; then
-	if ! docker inspect $(cat supervisor.cid) > /dev/null 2>&1; then
-	    rm -f "${DOCKER_CIDFILE}"
+    if [ -e "${SUPERVISOR_CIDFILE}" ]; then
+	if ! docker inspect $(cat ${SUPERVISOR_CIDFILE}) > /dev/null 2>&1; then
+	    rm -f "${SUPERVISOR_CIDFILE}"
 	fi
     fi
+    DOCKER_CIDFILE=${SUPERVISOR_CIDFILE}
     run /usr/bin/supervisord --nodaemon -c /etc/supervisord.conf
+}
+
+# Test if this Docker container is currently running in supervisor
+# mode or not.
+running_supervisor() {
+    if [ -e "${SUPERVISOR_CIDFILE}" ]; then
+	if docker inspect $(cat ${SUPERVISOR_CIDFILE}) > /dev/null 2>&1; then
+	    return 0
+	fi
+    fi
+    return 1
 }
 
 update() {
@@ -51,8 +66,19 @@ update() {
 	    DOCKER_ENTRYPOINT="/tools/boot" \
 	    run /tools/update) && \
 	echo "Committing." && \
-	docker commit $(cat ${update_cidfile}) ${TAG}
+	docker commit $(cat ${update_cidfile}) ${IMAGE}
     rm -f ${update_cidfile}
+}
+
+update_rules() {
+    if running_supervisor; then
+	echo "Found Suricata running in supervisor mode."
+	docker exec $(cat ${SUPERVISOR_CIDFILE}) idstools-rulecat
+	echo "Restarting Suricata."
+	docker exec $(cat ${SUPERVISOR_CIDFILE}) supervisorctl restart suricata
+    else
+	run idstools-rulecat
+    fi
 }
 
 usage() {
@@ -64,6 +90,8 @@ commands:
     run [command]        - Default to a shell.
     build                - (Re)builds the container.
     update               - Update OS, Suricata, etc.
+    update-rules         - Update Suricata rules.
+    supervisor           - Run Suricata under supervisor.
  
 EOF
 }
@@ -81,6 +109,10 @@ case "$1" in
 
     update)
 	update
+	;;
+
+    update-rules)
+	update_rules
 	;;
 
     supervisor)
