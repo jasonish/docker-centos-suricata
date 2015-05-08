@@ -20,6 +20,8 @@ outputs:
         - files
         - drop
         - ssh
+        - flow
+        - netflow
 
 default-rule-path: /data/etc/suricata/rules
 include: /data/etc/suricata/rules/rules.yaml
@@ -27,5 +29,10 @@ include: /data/etc/suricata/rules/rules.yaml
 classification-file: /data/etc/suricata/rules/classification.config
 reference-config-file: /data/etc/suricata/rules/reference.config
 threshold-file: /data/etc/suricata/threshold.config
+
+# Enable live rule reload, but to do so we have to redo the whole
+# detect-engine setting.
+detect-engine:
+  - rule-reload: true
 
 af-packet:
