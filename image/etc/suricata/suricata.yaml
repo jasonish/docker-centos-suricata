@@ -3,8 +3,6 @@
 
 include: /etc/suricata.dist/suricata.yaml
 
-default-log-dir: /data/var/log/suricata
-
 outputs:
   - eve-log:
       enabled: yes
@@ -20,11 +18,11 @@ outputs:
         - files
         - drop
         - ssh
-        - flow
-        - netflow
+        # Only in 2.1.
+        # - flow
+        # - netflow
 
 default-rule-path: /data/etc/suricata/rules
-#include: /data/etc/suricata/rules/rules.yaml
 rule-files:
   - merged.rules
 

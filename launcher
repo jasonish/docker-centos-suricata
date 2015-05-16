@@ -20,7 +20,10 @@ run() {
     tty > /dev/null && tty="--tty=true" || tty="--tty=false"
     test -e "${CONFIG_FILENAME}" && env_file="--env-file=${CONFIG_FILENAME}"
     net="--net=${DOCKER_NET:=host}"
+
     volumes="-v $(pwd)/data:/data ${VOLUMES}"
+    volumes="-v $(pwd)/data/var/log:/var/log ${volumes}"
+
     cidfile="--cidfile=${DOCKER_CIDFILE:=}"
     rm="--rm=${DOCKER_RM:=true}"
     entrypoint="--entrypoint=${DOCKER_ENTRYPOINT:=/tools/boot}"
