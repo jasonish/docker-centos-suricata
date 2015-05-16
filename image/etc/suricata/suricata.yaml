@@ -24,7 +24,9 @@ outputs:
         - netflow
 
 default-rule-path: /data/etc/suricata/rules
-include: /data/etc/suricata/rules/rules.yaml
+#include: /data/etc/suricata/rules/rules.yaml
+rule-files:
+  - merged.rules
 
 classification-file: /data/etc/suricata/rules/classification.config
 reference-config-file: /data/etc/suricata/rules/reference.config
