@@ -37,25 +37,23 @@ run() {
 
 SUPERVISOR_CIDFILE="supervisor.cid"
 
-supervisor() {
-    if [ -e "${SUPERVISOR_CIDFILE}" ]; then
-	if ! docker inspect $(cat ${SUPERVISOR_CIDFILE}) > /dev/null 2>&1; then
-	    rm -f "${SUPERVISOR_CIDFILE}"
-	fi
-    fi
-    DOCKER_CIDFILE=${SUPERVISOR_CIDFILE}
-    run /usr/bin/supervisord --nodaemon -c /etc/supervisord.conf
-}
-
 # Test if this Docker container is currently running in supervisor
 # mode or not.
 running_supervisor() {
     if [ -e "${SUPERVISOR_CIDFILE}" ]; then
-	if docker inspect $(cat ${SUPERVISOR_CIDFILE}) > /dev/null 2>&1; then
-	    return 0
+	if docker ps -q --no-trunc | grep -q $(cat ${SUPERVISOR_CIDFILE}); then
+	    return 0;
 	fi
     fi
     return 1
+}
+
+supervisor() {
+    if test -e "${SUPERVISOR_CIDFILE}" && ! running_supervisor; then
+	rm -f "${SUPERVISOR_CIDFILE}"
+    fi
+    DOCKER_CIDFILE=${SUPERVISOR_CIDFILE}
+    run /usr/bin/supervisord --nodaemon -c /etc/supervisord.conf
 }
 
 update() {
