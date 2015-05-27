@@ -23,7 +23,7 @@ RUN yum -y install suricata
 
 # Install a known version of idstools.
 RUN /usr/bin/pip install \
-https://github.com/jasonish/py-idstools/archive/ce60ebf6ecdcb676de69a05ae558948f2f69f8d6.zip
+https://github.com/jasonish/py-idstools/archive/b47b82a05a2374c3e7e5ac7f543316848447b06d.zip
 
 # Move the default Suricata configuration out of the way.
 RUN mv /etc/suricata /etc/suricata.dist
