@@ -18,10 +18,11 @@ build() {
 
 run() {
     tty > /dev/null && tty="--tty=true" || tty="--tty=false"
-    test -e "${CONFIG_FILENAME}" && env_file="--env-file=${CONFIG_FILENAME}"
     net="--net=${DOCKER_NET:=host}"
 
-    volumes="-v $(pwd)/data:/data ${VOLUMES}"
+    volumes="${VOLUMES}"
+    volumes="-v $(pwd)/config:/config ${volumes}"
+    volumes="-v $(pwd)/data:/data ${volumes}"
     volumes="-v $(pwd)/data/var/log:/var/log ${volumes}"
 
     cidfile="--cidfile=${DOCKER_CIDFILE:=}"
@@ -33,7 +34,6 @@ run() {
 	 ${rm} \
 	 ${entrypoint} \
 	 ${net} \
-	 ${env_file} \
 	 ${volumes} \
 	 ${IMAGE} "$@"
 }

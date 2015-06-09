@@ -3,6 +3,8 @@
 # Entry point script to make sure the container is setup for proper
 # operation.
 
+. /config
+
 if [ ! -d /data ]; then
     echo "error: /data is not mounted as a volume"
     exit 1
