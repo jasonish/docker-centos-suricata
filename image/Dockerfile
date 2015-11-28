@@ -15,15 +15,11 @@ RUN pip install supervisor
 
 # Add Suricata repository.
 RUN yum -y localinstall http://codemonkey.net/files/rpm/suricata/el7/suricata-release-el-7-1.el7.noarch.rpm
-RUN yum -y install suricata
-
-# Install the most recent rulecat from idstools.
-# RUN /usr/bin/pip \
-#     install https://github.com/jasonish/py-idstools/archive/master.zip
+RUN yum -y install suricata-2.0.10
 
 # Install a known version of idstools.
 RUN /usr/bin/pip install \
-https://github.com/jasonish/py-idstools/archive/b47b82a05a2374c3e7e5ac7f543316848447b06d.zip
+    https://github.com/jasonish/py-idstools/archive/0.5.1.zip
 
 # Move the default Suricata configuration out of the way.
 RUN mv /etc/suricata /etc/suricata.dist
