@@ -15,7 +15,7 @@ RUN pip install supervisor
 
 # Add Suricata repository.
 RUN yum -y localinstall http://codemonkey.net/files/rpm/suricata/el7/suricata-release-el-7-1.el7.noarch.rpm
-RUN yum -y install suricata-2.0.10
+RUN yum -y install suricata-2.0.11
 
 # Install a known version of idstools.
 RUN /usr/bin/pip install \
